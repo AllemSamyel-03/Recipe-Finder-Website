@@ -20,6 +20,7 @@ function Home() {
     try {
       const response = await fetch(url);
       const data = await response.json();
+      // console.log(data);
       setRecipes(data.meals || []);
     } catch (error) {
       setRecipes([]);
@@ -36,9 +37,10 @@ function Home() {
       setCategories(categoriesData.categories || []);
 
       const randomList = await Promise.all(
-        [1, 2, 3, 4].map(async () => {
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(async () => {
           const response = await fetch(ApiUrls.randomRecipe());
           const data = await response.json();
+          // console.log(data);
           return data.meals[0];
         }),
       );

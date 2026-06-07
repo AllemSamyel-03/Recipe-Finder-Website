@@ -18,7 +18,7 @@ function CategoryFilter({ categories, activeCategory, onCategoryClick }) {
         >
           All
         </button>
-        {categories.slice(0, 10).map((category) => (
+        {categories.slice(1).map((category) => (
           <button
             type="button"
             key={category.idCategory}
