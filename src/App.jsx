@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { RecipeContext } from "./Context/RecipeContext";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import Navbar from "./Components/Navbar";
@@ -12,20 +18,47 @@ import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import { getStorageData, setStorageData } from "./utils/localStorage";
 
+const FAVORITES_KEY = "recipeFavoritesByUser";
+
+const getUserFavorites = (email) => {
+  if (!email) {
+    return [];
+  }
+
+  const allFavorites = getStorageData(FAVORITES_KEY, {});
+  return allFavorites[email] || [];
+};
+
+const saveUserFavorites = (email, recipes) => {
+  if (!email) {
+    return;
+  }
+
+  const allFavorites = getStorageData(FAVORITES_KEY, {});
+  setStorageData(FAVORITES_KEY, { ...allFavorites, [email]: recipes });
+};
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(() =>
     getStorageData("recipeCurrentUser", null),
   );
-  const [favorites, setFavorites] = useState(() =>
-    getStorageData("recipeFavorites", []),
-  );
+  const [favorites, setFavorites] = useState(() => {
+    const storedUser = getStorageData("recipeCurrentUser", null);
+    return getUserFavorites(storedUser?.email);
+  });
 
   const isAuthenticated = currentUser !== null;
-
-  useEffect(() => {
-    setStorageData("recipeFavorites", favorites);
-  }, [favorites]);
 
   const signupUser = (userData) => {
     const users = getStorageData("recipeUsers", []);
@@ -46,8 +79,10 @@ function App() {
 
     const updatedUsers = [...users, newUser];
     setStorageData("recipeUsers", updatedUsers);
+    saveUserFavorites(newUser.email, []);
     setStorageData("recipeCurrentUser", newUser);
     setCurrentUser(newUser);
+    setFavorites([]);
     navigate("/");
     return { success: true, message: "Account created successfully." };
   };
@@ -65,6 +100,7 @@ function App() {
 
     setStorageData("recipeCurrentUser", validUser);
     setCurrentUser(validUser);
+    setFavorites(getUserFavorites(validUser.email));
     navigate("/");
     return { success: true, message: "Login successful." };
   };
@@ -72,6 +108,7 @@ function App() {
   const logoutUser = () => {
     localStorage.removeItem("recipeCurrentUser");
     setCurrentUser(null);
+    setFavorites([]);
     navigate("/login");
   };
 
@@ -79,12 +116,18 @@ function App() {
     const recipeExists = favorites.find(
       (item) => item.idMeal === recipe.idMeal,
     );
+    let updatedFavorites = [];
 
     if (recipeExists) {
-      setFavorites(favorites.filter((item) => item.idMeal !== recipe.idMeal));
+      updatedFavorites = favorites.filter(
+        (item) => item.idMeal !== recipe.idMeal,
+      );
     } else {
-      setFavorites([...favorites, recipe]);
+      updatedFavorites = [...favorites, recipe];
     }
+
+    setFavorites(updatedFavorites);
+    saveUserFavorites(currentUser?.email, updatedFavorites);
   };
 
   const isFavorite = (idMeal) => {
@@ -104,6 +147,7 @@ function App() {
 
   return (
     <RecipeContext.Provider value={contextValue}>
+      <ScrollToTop />
       {isAuthenticated && <Navbar />}
       <div className={isAuthenticated ? "app-main" : ""}>
         <Routes>

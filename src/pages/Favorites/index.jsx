@@ -1,3 +1,4 @@
+import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import EmptyView from "../../Components/EmptyView";
 import RecipeCard from "../../Components/RecipeCard";
@@ -27,6 +28,9 @@ function Favorites() {
         </div>
       ) : (
         <div>
+          <div className="empty-favorite-icon">
+            <Heart size={74} />
+          </div>
           <EmptyView
             title="No favorites yet"
             message="Search recipes and tap the heart button to save dishes here."
